@@ -7,7 +7,11 @@ if [[ "$(uname)" != "Darwin" ]]; then
   echo "Quill runs on macOS only." >&2; exit 1
 fi
 
-PY="$(command -v python3 || true)"
+# Prefer a newer Python (e.g. Homebrew's python3.12) over macOS's built-in 3.9.
+PY=""
+for c in python3.13 python3.12 python3.11 python3.10 /opt/homebrew/bin/python3.12 /usr/local/bin/python3.12 python3; do
+  if command -v "$c" >/dev/null 2>&1; then PY="$(command -v "$c")"; break; fi
+done
 if [[ -z "$PY" ]]; then
   echo "python3 not found. Install it with:  brew install python@3.12" >&2; exit 1
 fi
