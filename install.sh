@@ -38,11 +38,5 @@ else
   pip install faster-whisper
 fi
 
-chmod +x run.sh
-echo
-echo "Done. Start Quill with:  ./run.sh"
-echo "Optional, start at login:  ./install.sh --login   (or run ./login-item.sh)"
-
-if [[ "${1:-}" == "--login" ]]; then
-  ./login-item.sh
-fi
+chmod +x run.sh make-app.sh
+./make-app.sh "$@"

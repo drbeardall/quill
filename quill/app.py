@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import subprocess
+import sys
 import threading
 import time
 import traceback
@@ -74,9 +75,7 @@ class QuillApp(rumps.App):
             rumps.MenuItem("Copy last dictation", callback=self.copy_last),
             self.cleanup_item,
             None,
-            rumps.MenuItem("Edit settings…", callback=self.edit_config),
-            rumps.MenuItem("Reload settings", callback=self.reload_config),
-            rumps.MenuItem("Set Claude API key…", callback=self.set_key),
+            rumps.MenuItem("Settings…", callback=self.open_settings, key=","),
             rumps.MenuItem("Open log", callback=self.open_log),
             None,
             rumps.MenuItem("Quit Quill", callback=rumps.quit_application),
@@ -89,6 +88,8 @@ class QuillApp(rumps.App):
             self.cfg = copy.deepcopy(core.DEFAULT_CONFIG)
             self.status_text = f"Settings file has an error, using defaults: {e}"
         self._apply_config()
+        self._cfg_mtime = self._config_mtime()
+        self._ticks = 0
 
         self.timer = rumps.Timer(self._tick, 0.1)
         self.timer.start()
@@ -134,19 +135,40 @@ class QuillApp(rumps.App):
         if self.status_item.title != self.status_text:
             self.status_item.title = self.status_text
         self.cleanup_item.state = int(bool(self.cfg.get("cleanup", {}).get("enabled", True)))
+        self._ticks += 1
+        if self._ticks % 5 == 0:  # twice a second: pick up changes made in the Settings window
+            m = self._config_mtime()
+            if m != self._cfg_mtime:
+                self._cfg_mtime = m
+                self.reload_config(None)
+
+    @staticmethod
+    def _config_mtime() -> float:
+        try:
+            return core.CONFIG_PATH.stat().st_mtime
+        except OSError:
+            return 0.0
+
+    def open_settings(self, _sender=None) -> None:
+        subprocess.Popen(
+            [sys.executable, "-m", "quill.settings"],
+            cwd=str(Path(__file__).resolve().parent.parent),
+            start_new_session=True,
+        )
+
+    def sound(self, name: str) -> None:
+        if self.cfg.get("sounds", True):
+            mac.play(name)
 
     def toggle_cleanup(self, _sender) -> None:
         c = self.cfg.setdefault("cleanup", {})
         c["enabled"] = not c.get("enabled", True)
         core.save_config(self.cfg)
+        self._cfg_mtime = self._config_mtime()
 
     def copy_last(self, _sender) -> None:
         if self.last_text:
             mac.set_clipboard(self.last_text)
-
-    def edit_config(self, _sender) -> None:
-        core.load_config()  # make sure the file exists
-        subprocess.run(["open", "-t", str(core.CONFIG_PATH)])
 
     def open_log(self, _sender) -> None:
         LOG_PATH.touch(exist_ok=True)
@@ -156,25 +178,10 @@ class QuillApp(rumps.App):
         try:
             self.cfg = core.load_config()
             self._apply_config()
-            self.status_text = "Settings reloaded. " + self._ready_text()
+            self.status_text = self._ready_text() if self.transcriber else self.status_text
+            log("Settings reloaded.")
         except Exception as e:
             self.status_text = f"Settings file has an error: {e}"
-
-    def set_key(self, _sender) -> None:
-        w = rumps.Window(
-            message="Paste your Anthropic API key (from console.anthropic.com). It is stored in your macOS Keychain.",
-            title="Claude API key",
-            default_text="",
-            ok="Save",
-            cancel="Cancel",
-            dimensions=(360, 24),
-        )
-        resp = w.run()
-        key = (resp.text or "").strip()
-        if resp.clicked and key:
-            mac.set_api_key(key)
-            self._apply_config()
-            self.status_text = self._ready_text()
 
     # ---------------------------------------------------------- hotkey thread
     def _on_press(self, key) -> None:
@@ -190,7 +197,7 @@ class QuillApp(rumps.App):
                 self._finish()
             return
         if self.busy or self.transcriber is None:
-            mac.play("Funk")
+            self.sound("Funk")
             return
         self.mode = "command" if (self.held & self.command_mods) else "dictate"
         self.front = mac.frontmost_app()
@@ -203,8 +210,7 @@ class QuillApp(rumps.App):
         self.recording = True
         self.press_time = time.time()
         self.state = "cmd" if self.mode == "command" else "rec"
-        if self.cfg.get("sounds", True):
-            mac.play("Tink")
+        self.sound("Tink")
 
     def _on_release(self, key) -> None:
         self.held.discard(key)
@@ -232,8 +238,7 @@ class QuillApp(rumps.App):
         self.recording = False
         self.busy = True
         self.state = "busy"
-        if self.cfg.get("sounds", True):
-            mac.play("Pop")
+        self.sound("Pop")
         threading.Thread(target=self._process, args=(audio, self.mode, self.front), daemon=True).start()
 
     def _wait_mods_released(self, timeout: float = 2.0) -> None:
@@ -253,14 +258,14 @@ class QuillApp(rumps.App):
             if mode == "command":
                 if not style["cleanup"]:
                     self.status_text = "Command mode is off in this app (set to local-only)."
-                    mac.play("Funk")
+                    self.sound("Funk")
                     return
                 self._wait_mods_released()
                 selection = mac.copy_selection()
                 out = self.engine.command(raw, selection, style)
                 if out is None:
                     self.status_text = "Command failed. See log."
-                    mac.play("Funk")
+                    self.sound("Funk")
                     return
             else:
                 out = self.engine.dictate(raw, style)
@@ -277,7 +282,7 @@ class QuillApp(rumps.App):
         except Exception as e:
             log(traceback.format_exc())
             self.status_text = f"Error: {e}"
-            mac.play("Funk")
+            self.sound("Funk")
         finally:
             self.busy = False
             self.state = "idle" if self.transcriber else "loading"
@@ -288,4 +293,7 @@ def main() -> None:
 
     # Menu-bar only: no Dock icon.
     NSApplication.sharedApplication().setActivationPolicy_(1)
-    QuillApp().run()
+    app = QuillApp()
+    if "--open-settings" in sys.argv:
+        app.open_settings()
+    app.run()

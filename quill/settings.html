@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quill Settings</title>
+<style>
+  :root {
+    --bg: #f5f5f7; --panel: #ffffff; --side: #ececef; --ink: #1d1d1f; --muted: #6e6e73;
+    --line: #e2e2e6; --field: #ffffff; --field-line: #d2d2d7;
+    --accent: #3b4fd8; --accent-ink: #ffffff; --accent-soft: #e8ebfd;
+    --good: #1f8a4c; --good-soft: #e3f4ea; --warn: #b25c00; --warn-soft: #fdf0e1; --bad: #c4314b;
+    --chip: #eef0f4; --shadow: 0 1px 2px rgba(0,0,0,.05), 0 1px 1px rgba(0,0,0,.03);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e; --panel: #262628; --side: #202022; --ink: #f2f2f4; --muted: #9a9aa0;
+      --line: #36363a; --field: #1c1c1e; --field-line: #424247;
+      --accent: #7d8cff; --accent-ink: #0f1240; --accent-soft: #2b2f55;
+      --good: #4cc37e; --good-soft: #1d3326; --warn: #f0a447; --warn-soft: #3a2b18; --bad: #ff6b81;
+      --chip: #323236; --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font: 13px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    color: var(--ink); background: var(--bg); display: flex; overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+  }
+  input, textarea, select { -webkit-user-select: text; user-select: text; font: inherit; color: inherit; }
+
+  /* Sidebar */
+  nav { width: 196px; flex: none; background: var(--side); border-right: 1px solid var(--line);
+        padding: 18px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 18px; }
+  .brand .logo { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+                 background: linear-gradient(160deg, #5b6cff, #2a35a8); color: #fff; }
+  .brand b { font-size: 15px; letter-spacing: -.01em; }
+  .brand small { display: block; color: var(--muted); font-size: 11px; margin-top: -1px; }
+  nav button { all: unset; display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 7px;
+               cursor: default; color: var(--ink); }
+  nav button svg { width: 16px; height: 16px; flex: none; color: var(--muted); }
+  nav button:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+  nav button.on { background: var(--accent); color: var(--accent-ink); }
+  nav button.on svg { color: var(--accent-ink); }
+  nav .spacer { flex: 1; }
+  .runstate { margin: 0 4px; padding: 10px; border-radius: 9px; background: var(--panel); border: 1px solid var(--line);
+              font-size: 12px; display: grid; gap: 8px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; background: var(--muted); }
+  .dot.ok { background: var(--good); } .dot.off { background: var(--bad); }
+
+  /* Main */
+  main { flex: 1; overflow-y: auto; padding: 26px 30px 40px; }
+  header.page { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: -.015em; }
+  .saved { font-size: 12px; color: var(--muted); transition: opacity .3s; }
+  .saved.err { color: var(--bad); }
+  .lede { color: var(--muted); margin: -8px 0 18px; max-width: 620px; }
+  section.tab { display: none; } section.tab.on { display: block; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 11px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .card h2 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted);
+             margin: 0; padding: 12px 16px 0; }
+  .row { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--line); min-height: 50px; }
+  .card h2 + .row, .card .row:first-child { border-top: 0; }
+  .row .label { flex: 1; min-width: 0; }
+  .row .label .t { font-weight: 500; }
+  .row .label .d { color: var(--muted); font-size: 12px; margin-top: 1px; }
+
+  select, input[type=text], input[type=password], textarea {
+    background: var(--field); border: 1px solid var(--field-line); border-radius: 7px; padding: 6px 9px; outline: none;
+  }
+  select { padding-right: 26px; -webkit-appearance: none; appearance: none; min-width: 190px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.6' fill='none'/></svg>");
+    background-repeat: no-repeat; background-position: right 9px center; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+  textarea { width: 100%; resize: vertical; min-height: 64px; line-height: 1.4; }
+
+  .btn { all: unset; cursor: default; padding: 6px 12px; border-radius: 7px; border: 1px solid var(--field-line);
+         background: var(--panel); font-weight: 500; white-space: nowrap; }
+  .btn:hover { background: color-mix(in srgb, var(--ink) 5%, var(--panel)); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  .btn.primary:hover { filter: brightness(1.07); }
+  .btn.small { padding: 3px 9px; font-size: 12px; }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .icon-btn { all: unset; cursor: default; width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; color: var(--muted); flex: none; }
+  .icon-btn:hover { background: color-mix(in srgb, var(--bad) 12%, transparent); color: var(--bad); }
+
+  /* Switch */
+  .switch { position: relative; width: 38px; height: 22px; flex: none; }
+  .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .switch span { position: absolute; inset: 0; border-radius: 22px; background: var(--field-line); transition: .18s; }
+  .switch span::after { content: ""; position: absolute; width: 18px; height: 18px; left: 2px; top: 2px; border-radius: 50%; background: #fff;
+                        box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: .18s; }
+  .switch input:checked + span { background: var(--accent); }
+  .switch input:checked + span::after { transform: translateX(16px); }
+  .switch input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 2px 9px; border-radius: 20px; }
+  .pill.good { background: var(--good-soft); color: var(--good); } .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .msg { font-size: 12px; margin-top: 6px; } .msg.bad { color: var(--bad); } .msg.good { color: var(--good); }
+
+  kbd { font: 600 11px -apple-system, sans-serif; border: 1px solid var(--field-line); border-bottom-width: 2px; border-radius: 5px;
+        padding: 1px 6px; background: var(--panel); }
+  .howto { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; padding: 14px 16px 16px; }
+  .howto div { background: var(--bg); border-radius: 9px; padding: 10px 12px; }
+  .howto b { display: block; font-size: 12px; margin-bottom: 4px; }
+  .howto span { color: var(--muted); font-size: 12px; }
+
+  /* Chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 14px 16px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; background: var(--chip); border-radius: 20px; padding: 3px 4px 3px 11px; }
+  .chip button { all: unset; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); font-size: 14px; line-height: 1; }
+  .chip button:hover { background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
+  .adder { display: flex; gap: 8px; padding: 0 16px 14px; }
+  .adder input { flex: 1; }
+
+  /* Tables */
+  .grid-head, .grid-row { display: grid; gap: 10px; align-items: center; padding: 8px 16px; }
+  .grid-head { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; padding-top: 12px; }
+  .grid-row { border-top: 1px solid var(--line); }
+  .grid-row input[type=text], .grid-row select { width: 100%; min-width: 0; }
+  .repl .grid-head, .repl .grid-row { grid-template-columns: 1fr 18px 1fr 26px; }
+  .arrow { color: var(--muted); text-align: center; }
+  .apps .grid-head, .apps .grid-row { grid-template-columns: minmax(150px, 1.3fr) minmax(150px, 1fr) 96px 26px; }
+  .appname b { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .appname small { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+  .custom { grid-column: 1 / -1; }
+  .center { display: flex; justify-content: center; }
+  .empty { color: var(--muted); padding: 14px 16px; border-top: 1px solid var(--line); }
+
+  .snip { padding: 14px 16px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+  .snip:first-of-type { border-top: 0; }
+  .snip .top { display: flex; gap: 8px; align-items: center; }
+  .snip .top input { flex: 1; font-weight: 500; }
+  .snip .say { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .footer-btn { padding: 12px 16px; border-top: 1px solid var(--line); }
+  .note { color: var(--muted); font-size: 12px; padding: 0 16px 14px; }
+  .note.top { padding-top: 12px; }
+  code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="brand">
+    <div class="logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4Zm7-4a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.92V20H8a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-3v-2.08A7 7 0 0 0 19 11Z"/></svg></div>
+    <div><b>Quill</b><small>Voice dictation</small></div>
+  </div>
+  <button data-tab="general" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>General</button>
+  <button data-tab="dictionary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14Z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>Dictionary</button>
+  <button data-tab="snippets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>Snippets</button>
+  <button data-tab="styles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>App styles</button>
+  <div class="spacer"></div>
+  <div class="runstate">
+    <div id="runText"><span class="dot"></span>Checking…</div>
+    <button class="btn small" id="runBtn">Restart Quill</button>
+  </div>
+</nav>
+
+<main>
+  <!-- GENERAL -->
+  <section class="tab on" id="tab-general">
+    <header class="page"><h1>General</h1><span class="saved" id="saved"></span></header>
+
+    <div class="card">
+      <div class="howto">
+        <div><b><kbd id="k1">Right ⌥</kbd> hold</b><span>Talk, release to type it</span></div>
+        <div><b><kbd id="k2">Right ⌥</kbd> double-tap</b><span>Hands-free; tap again to finish</span></div>
+        <div><b><kbd id="k3m">⇧</kbd> + <kbd id="k3">Right ⌥</kbd></b><span>Command: rewrite selected text</span></div>
+        <div><b><kbd>esc</kbd></b><span>Cancel while recording</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Keyboard &amp; sound</h2>
+      <div class="row"><div class="label"><div class="t">Dictation key</div><div class="d">Hold it to talk.</div></div>
+        <select id="hotkey">
+          <option value="alt_r">Right Option ⌥</option><option value="alt_l">Left Option ⌥</option>
+          <option value="cmd_r">Right Command ⌘</option><option value="ctrl_r">Right Control ⌃</option>
+          <option value="f13">F13</option><option value="f14">F14</option><option value="f15">F15</option>
+        </select></div>
+      <div class="row"><div class="label"><div class="t">Command mode modifier</div><div class="d">Hold this too, to edit selected text by voice.</div></div>
+        <select id="cmdmod"><option value="shift">Shift ⇧</option><option value="cmd">Command ⌘</option><option value="ctrl">Control ⌃</option></select></div>
+      <div class="row"><div class="label"><div class="t">Sounds</div><div class="d">Start, stop and error sounds.</div></div>
+        <label class="switch"><input type="checkbox" id="sounds"><span></span></label></div>
+    </div>
+
+    <div class="card">
+      <h2>AI cleanup</h2>
+      <div class="row"><div class="label"><div class="t">Clean up with Claude</div><div class="d">Removes “um”s, fixes punctuation, applies your dictionary and app style. Off = raw transcript, nothing leaves your Mac.</div></div>
+        <label class="switch"><input type="checkbox" id="cleanup"><span></span></label></div>
+      <div class="row"><div class="label"><div class="t">Claude model</div><div class="d">Haiku is fastest and cheapest. Sonnet rewrites more carefully.</div></div>
+        <select id="model"><option value="claude-haiku-5-5">Haiku (fast)</option><option value="claude-sonnet-5-5">Sonnet (smarter)</option></select></div>
+      <div class="row" style="align-items:flex-start"><div class="label"><div class="t">Claude API key</div>
+          <div class="d">From console.anthropic.com. Stored in your Mac's Keychain. Billed per use, separate from your Claude subscription.</div>
+          <div class="msg" id="keyMsg"></div></div>
+        <div style="display:grid; gap:8px; justify-items:end">
+          <div id="keyState"></div>
+          <div style="display:flex; gap:6px"><input type="password" id="keyInput" placeholder="sk-ant-…" style="width:200px"><button class="btn primary" id="keySave">Save</button></div>
+          <div style="display:flex; gap:6px"><button class="btn small" id="keyTest">Test key</button><button class="btn small" id="keyClear">Remove</button><button class="btn small" id="keyGet">Get a key</button></div>
+        </div></div>
+    </div>
+
+    <div class="card">
+      <h2>Speech recognition</h2>
+      <div class="row"><div class="label"><div class="t">Whisper model</div><div class="d">Runs on your Mac. Change takes effect after Restart Quill.</div></div>
+        <select id="whisper"><option value="auto">Best (large-v3-turbo)</option><option value="small.en">Faster (small, English)</option><option value="base.en">Fastest (base, English)</option></select></div>
+    </div>
+
+    <div class="card">
+      <h2>Permissions &amp; help</h2>
+      <div class="note top">If holding the key does nothing, allow Quill (or Terminal) in these three places, then click Restart Quill.</div>
+      <div class="row" style="flex-wrap:wrap; gap:8px">
+        <button class="btn" data-priv="accessibility">Accessibility…</button>
+        <button class="btn" data-priv="input">Input Monitoring…</button>
+        <button class="btn" data-priv="microphone">Microphone…</button>
+        <span style="flex:1"></span>
+        <button class="btn" id="openLog">Open log</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- DICTIONARY -->
+  <section class="tab" id="tab-dictionary">
+    <header class="page"><h1>Dictionary</h1><span class="saved"></span></header>
+    <p class="lede">Words Quill should always spell right, like names, drug names and billing terms. They also help the speech model hear them correctly.</p>
+    <div class="card">
+      <h2>Words</h2>
+      <div class="chips" id="words"></div>
+      <div class="adder"><input type="text" id="wordInput" placeholder="Add a word or phrase, then press Return"><button class="btn" id="wordAdd">Add</button></div>
+    </div>
+    <div class="card repl">
+      <h2>Always replace</h2>
+      <div class="note top" style="padding-bottom:0">When Quill hears the left side, it always writes the right side.</div>
+      <div class="grid-head"><span>When it hears</span><span></span><span>Write</span><span></span></div>
+      <div id="repls"></div>
+      <div class="footer-btn"><button class="btn" id="replAdd">+ Add replacement</button></div>
+    </div>
+  </section>
+
+  <!-- SNIPPETS -->
+  <section class="tab" id="tab-snippets">
+    <header class="page"><h1>Snippets</h1><span class="saved"></span></header>
+    <p class="lede">Say the trigger phrase and Quill types the saved text. Works on its own (“clinic signature”) or mid-sentence (“send it to my clinic address”). Snippet text stays on your Mac.</p>
+    <div class="card" id="snips"></div>
+    <button class="btn primary" id="snipAdd">+ New snippet</button>
+  </section>
+
+  <!-- STYLES -->
+  <section class="tab" id="tab-styles">
+    <header class="page"><h1>App styles</h1><span class="saved"></span></header>
+    <p class="lede">How your writing should sound in each app. Turn on <b>Local only</b> for apps where text must never leave your Mac, such as your charting software.</p>
+    <div class="card">
+      <div class="row"><div class="label"><div class="t">Default style</div><div class="d">Used in any app not listed below.</div></div>
+        <select id="defStyle"></select></div>
+    </div>
+    <div class="card apps">
+      <div class="grid-head"><span>App</span><span>Style</span><span class="center">Local only</span><span></span></div>
+      <div id="appRows"></div>
+      <div class="footer-btn" style="display:flex; gap:8px">
+        <select id="appPick" style="flex:1"><option value="">Choose an open app to add…</option></select>
+        <button class="btn" id="appAdd">Add</button>
+        <button class="btn" id="appRefresh" title="Refresh list of open apps">↻</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+let cfg = null, presets = {}, appNames = {}, api = null, saveTimer = null;
+
+const PRESET_LABELS = { clean: "Clean", formal: "Formal (email)", casual: "Casual (chat)", very_casual: "Very casual (texts)", clinical: "Clinical (chart notes)" };
+const KEY_LABELS = { alt_r: "Right ⌥", alt_l: "Left ⌥", cmd_r: "Right ⌘", ctrl_r: "Right ⌃", f13: "F13", f14: "F14", f15: "F15" };
+const MOD_LABELS = { shift: "⇧", cmd: "⌘", ctrl: "⌃" };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// ---------------------------------------------------------------- save
+function showSaved(text, err) {
+  $$(".saved").forEach(el => { el.textContent = text; el.classList.toggle("err", !!err); el.style.opacity = 1; });
+  if (!err) setTimeout(() => $$(".saved").forEach(el => el.style.opacity = 0), 1600);
+}
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    const r = await api.save_config(cfg);
+    r.ok ? showSaved("Saved ✓") : showSaved("Couldn't save: " + r.error, true);
+  }, 300);
+}
+
+// ---------------------------------------------------------------- tabs
+$$("nav button[data-tab]").forEach(b => b.onclick = () => {
+  $$("nav button[data-tab]").forEach(x => x.classList.toggle("on", x === b));
+  $$("section.tab").forEach(s => s.classList.toggle("on", s.id === "tab-" + b.dataset.tab));
+});
+
+// ---------------------------------------------------------------- general
+function renderGeneral() {
+  $("#hotkey").value = cfg.hotkeys.dictate; $("#cmdmod").value = cfg.hotkeys.command_modifier;
+  $("#sounds").checked = cfg.sounds !== false; $("#cleanup").checked = cfg.cleanup.enabled !== false;
+  ensureOption($("#model"), cfg.cleanup.model); $("#model").value = cfg.cleanup.model;
+  ensureOption($("#whisper"), cfg.whisper.model); $("#whisper").value = cfg.whisper.model;
+  const k = KEY_LABELS[cfg.hotkeys.dictate] || cfg.hotkeys.dictate;
+  ["#k1", "#k2", "#k3"].forEach(s => $(s).textContent = k);
+  $("#k3m").textContent = MOD_LABELS[cfg.hotkeys.command_modifier] || "⇧";
+}
+function ensureOption(sel, v) { if (v && ![...sel.options].some(o => o.value === v)) sel.add(new Option(v, v)); }
+$("#hotkey").onchange = e => { cfg.hotkeys.dictate = e.target.value; renderGeneral(); save(); };
+$("#cmdmod").onchange = e => { cfg.hotkeys.command_modifier = e.target.value; renderGeneral(); save(); };
+$("#sounds").onchange = e => { cfg.sounds = e.target.checked; save(); };
+$("#cleanup").onchange = e => { cfg.cleanup.enabled = e.target.checked; save(); };
+$("#model").onchange = e => { cfg.cleanup.model = e.target.value; save(); };
+$("#whisper").onchange = e => { cfg.whisper.model = e.target.value; save(); showSaved("Saved ✓  Restart Quill to use the new model"); };
+
+function renderKey(k) {
+  $("#keyState").innerHTML = k.set
+    ? `<span class="pill good">● Key saved <code>${esc(k.masked)}</code></span>`
+    : `<span class="pill warn">● No key yet: raw transcripts only</span>`;
+}
+function keyMsg(text, good) { const m = $("#keyMsg"); m.textContent = text; m.className = "msg " + (good ? "good" : "bad"); }
+$("#keySave").onclick = async () => {
+  const r = await api.set_key($("#keyInput").value);
+  if (r.ok) { $("#keyInput").value = ""; renderKey(r.key); keyMsg("Saved to Keychain.", true); } else keyMsg(r.error);
+};
+$("#keyInput").onkeydown = e => { if (e.key === "Enter") $("#keySave").click(); };
+$("#keyTest").onclick = async () => { keyMsg("Testing…", true); const r = await api.test_key(); r.ok ? keyMsg("Key works ✓", true) : keyMsg(r.error); };
+$("#keyClear").onclick = async () => { const r = await api.clear_key(); renderKey(r.key); keyMsg("Key removed.", true); };
+$("#keyGet").onclick = () => api.open_url("https://console.anthropic.com/settings/keys");
+$$("[data-priv]").forEach(b => b.onclick = () => api.open_privacy(b.dataset.priv));
+$("#openLog").onclick = () => api.open_log();
+
+async function refreshRunning() {
+  const on = await api.quill_running();
+  $("#runText").innerHTML = on ? `<span class="dot ok"></span>Quill is running` : `<span class="dot off"></span>Quill is not running`;
+  $("#runBtn").textContent = on ? "Restart Quill" : "Start Quill";
+}
+$("#runBtn").onclick = async () => {
+  $("#runText").innerHTML = `<span class="dot"></span>Starting…`;
+  await api.restart_quill(); setTimeout(refreshRunning, 1500);
+};
+
+// ---------------------------------------------------------------- dictionary
+function renderWords() {
+  const words = cfg.dictionary.words;
+  $("#words").innerHTML = words.length
+    ? words.map((w, i) => `<span class="chip">${esc(w)}<button data-i="${i}" aria-label="Remove ${esc(w)}">×</button></span>`).join("")
+    : `<span style="color:var(--muted)">No words yet.</span>`;
+  $$("#words button").forEach(b => b.onclick = () => { words.splice(+b.dataset.i, 1); renderWords(); save(); });
+}
+function addWord() {
+  const v = $("#wordInput").value.trim(); if (!v) return;
+  if (!cfg.dictionary.words.includes(v)) cfg.dictionary.words.push(v);
+  $("#wordInput").value = ""; renderWords(); save();
+}
+$("#wordAdd").onclick = addWord;
+$("#wordInput").onkeydown = e => { if (e.key === "Enter") addWord(); };
+
+// Replacements are an object; edit as an ordered list and write back.
+let repl = [];
+function writeRepl() { cfg.dictionary.replacements = Object.fromEntries(repl.filter(r => r[0].trim()).map(r => [r[0].trim(), r[1]])); save(); }
+function renderRepl() {
+  $("#repls").innerHTML = repl.length ? repl.map((r, i) => `
+    <div class="grid-row"><input type="text" data-i="${i}" data-k="0" value="${esc(r[0])}" placeholder="safe corporation">
+      <span class="arrow">→</span><input type="text" data-i="${i}" data-k="1" value="${esc(r[1])}" placeholder="SAIF Corporation">
+      <button class="icon-btn" data-del="${i}" aria-label="Delete">${trash}</button></div>`).join("")
+    : `<div class="empty">No replacements yet.</div>`;
+  $$("#repls input").forEach(inp => inp.oninput = () => { repl[+inp.dataset.i][+inp.dataset.k] = inp.value; writeRepl(); });
+  $$("#repls [data-del]").forEach(b => b.onclick = () => { repl.splice(+b.dataset.del, 1); renderRepl(); writeRepl(); });
+}
+$("#replAdd").onclick = () => { repl.push(["", ""]); renderRepl(); $$("#repls input").at(-2).focus(); };
+
+// ---------------------------------------------------------------- snippets
+let snips = [];
+function writeSnips() { cfg.snippets = Object.fromEntries(snips.filter(s => s[0].trim()).map(s => [s[0].trim(), s[1]])); save(); }
+function renderSnips() {
+  $("#snips").innerHTML = snips.length ? snips.map((s, i) => `
+    <div class="snip"><div class="top"><span class="say">Say</span>
+      <input type="text" data-i="${i}" data-k="0" value="${esc(s[0])}" placeholder="trigger phrase, e.g. clinic signature">
+      <button class="icon-btn" data-del="${i}" aria-label="Delete snippet">${trash}</button></div>
+      <textarea data-i="${i}" data-k="1" rows="${Math.min(8, Math.max(2, s[1].split("\n").length))}" placeholder="Text to insert">${esc(s[1])}</textarea></div>`).join("")
+    : `<div class="empty" style="border:0">No snippets yet.</div>`;
+  $$("#snips input, #snips textarea").forEach(el => el.oninput = () => { snips[+el.dataset.i][+el.dataset.k] = el.value; writeSnips(); });
+  $$("#snips [data-del]").forEach(b => b.onclick = () => { snips.splice(+b.dataset.del, 1); renderSnips(); writeSnips(); });
+}
+$("#snipAdd").onclick = () => { snips.push(["", ""]); renderSnips(); $$("#snips input").at(-1).focus(); };
+
+// ---------------------------------------------------------------- styles
+function styleOptions(selected) {
+  const isPreset = selected in presets;
+  return Object.keys(presets).map(p => `<option value="${p}" ${p === selected ? "selected" : ""}>${PRESET_LABELS[p] || p}</option>`).join("")
+    + `<option value="__custom" ${!isPreset ? "selected" : ""}>Custom…</option>`;
+}
+function renderStyles() {
+  $("#defStyle").innerHTML = styleOptions(cfg.styles.default || "clean").replace(/<option value="__custom".*<\/option>/, "");
+  const apps = cfg.styles.apps; const ids = Object.keys(apps);
+  $("#appRows").innerHTML = ids.length ? ids.map(id => {
+    const e = apps[id]; const st = e.style ?? "clean"; const custom = !(st in presets);
+    return `<div class="grid-row" data-id="${esc(id)}">
+      <div class="appname"><b>${esc(appNames[id] || id)}</b><small>${esc(id)}</small></div>
+      <select data-role="style">${styleOptions(st)}</select>
+      <div class="center"><label class="switch"><input type="checkbox" data-role="local" ${e.cleanup === false ? "checked" : ""}><span></span></label></div>
+      <button class="icon-btn" data-role="del" aria-label="Remove app">${trash}</button>
+      ${custom ? `<textarea class="custom" data-role="custom" rows="2" placeholder="Describe the style, e.g. Short, friendly, no exclamation marks">${esc(st)}</textarea>` : ""}
+    </div>`;
+  }).join("") : `<div class="empty">No apps yet. Every app uses the default style.</div>`;
+  $$("#appRows .grid-row").forEach(row => {
+    const id = row.dataset.id, e = apps[id];
+    $('[data-role="style"]', row).onchange = ev => { e.style = ev.target.value === "__custom" ? "Clear and concise." : ev.target.value; renderStyles(); save(); if (ev.target.value === "__custom") { const t = $(`[data-id="${CSS.escape(id)}"] [data-role="custom"]`); t.focus(); t.select(); } };
+    $('[data-role="local"]', row).onchange = ev => { if (ev.target.checked) e.cleanup = false; else delete e.cleanup; save(); };
+    $('[data-role="del"]', row).onclick = () => { delete apps[id]; renderStyles(); save(); };
+    const c = $('[data-role="custom"]', row); if (c) c.oninput = () => { e.style = c.value; save(); };
+  });
+}
+$("#defStyle").onchange = e => { cfg.styles.default = e.target.value; save(); };
+async function loadRunningApps() {
+  const list = await api.running_apps();
+  $("#appPick").innerHTML = `<option value="">Choose an open app to add…</option>` +
+    list.filter(a => !(a.id in cfg.styles.apps)).map(a => `<option value="${esc(a.id)}" data-name="${esc(a.name)}">${esc(a.name)}</option>`).join("");
+}
+$("#appAdd").onclick = () => {
+  const sel = $("#appPick"); const id = sel.value; if (!id) return;
+  appNames[id] = sel.selectedOptions[0].dataset.name; cfg.styles.apps[id] = { style: cfg.styles.default || "clean" };
+  renderStyles(); loadRunningApps(); save();
+};
+$("#appRefresh").onclick = loadRunningApps;
+
+const trash = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>`;
+
+// ---------------------------------------------------------------- boot
+async function boot() {
+  api = window.pywebview.api;
+  const s = await api.get_state();
+  cfg = s.config; presets = s.presets; appNames = s.apps || {};
+  cfg.hotkeys ||= {}; cfg.cleanup ||= {}; cfg.whisper ||= {}; cfg.dictionary ||= { words: [], replacements: {} };
+  cfg.dictionary.words ||= []; cfg.dictionary.replacements ||= {}; cfg.snippets ||= {}; cfg.styles ||= { default: "clean", apps: {} }; cfg.styles.apps ||= {};
+  repl = Object.entries(cfg.dictionary.replacements); snips = Object.entries(cfg.snippets);
+  renderGeneral(); renderKey(s.key); renderWords(); renderRepl(); renderSnips(); renderStyles();
+  loadRunningApps(); refreshRunning(); setInterval(refreshRunning, 5000);
+}
+if (window.pywebview && window.pywebview.api) boot(); else window.addEventListener("pywebviewready", boot);
+</script>
+</body>
+</html>

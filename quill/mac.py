@@ -8,8 +8,6 @@ from AppKit import NSPasteboard, NSPasteboardTypeString, NSSound, NSWorkspace
 from pynput.keyboard import Controller, Key
 
 _kb = Controller()
-KEYCHAIN_SERVICE = "Quill"
-KEYCHAIN_USER = "anthropic_api_key"
 
 
 def frontmost_app() -> tuple[Optional[str], Optional[str]]:
@@ -80,20 +78,4 @@ def play(name: str) -> None:
         s.play()
 
 
-def get_api_key() -> Optional[str]:
-    import os
-
-    if os.environ.get("ANTHROPIC_API_KEY"):
-        return os.environ["ANTHROPIC_API_KEY"]
-    try:
-        import keyring
-
-        return keyring.get_password(KEYCHAIN_SERVICE, KEYCHAIN_USER)
-    except Exception:
-        return None
-
-
-def set_api_key(key: str) -> None:
-    import keyring
-
-    keyring.set_password(KEYCHAIN_SERVICE, KEYCHAIN_USER, key)
+from .keystore import get_api_key, set_api_key  # noqa: E402,F401

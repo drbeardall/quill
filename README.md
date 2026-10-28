@@ -6,35 +6,25 @@ it wherever your cursor is: Mail, Messages, Chrome, Notes, your EHR, anything.
 
 ## Install (about 5 minutes)
 
-Needs macOS 13+ and Python 3.9+ (the one built into macOS works).
+Needs macOS 13+ and Python 3.10+ (`brew install python@3.12`).
 
 ```bash
-cd ~/Downloads/quill        # wherever you unzipped it
-./install.sh
-./run.sh
+cd ~/quill
+./install.sh            # add --login to start Quill automatically when you log in
 ```
 
-A ◌ appears in the menu bar while the speech model downloads (first run only, ~1.5 GB on
-Apple Silicon). It turns into 🎙 when ready.
+This puts **Quill** in your Applications folder. Open it like any app (double-click, or ⌘Space and
+type Quill). Opening it starts Quill in the menu bar (🎙) and shows the **Settings window**, where you
+can change everything: hotkey, sounds, Claude key, dictionary, snippets and per-app styles. Changes
+save and apply instantly.
 
-Then, from the 🎙 menu, choose **Set Claude API key…** and paste a key from
-console.anthropic.com. It's stored in your Keychain. Without a key Quill still works, it just
-types the raw transcript.
+The first start downloads the speech model (~1.5 GB); the 🎙 shows ◌ until it's ready.
 
-### Permissions (macOS will ask the first time)
+### Permissions
 
-Grant all three to **Terminal** (or whichever app runs `./run.sh`) in
-System Settings → Privacy & Security:
-
-| Permission | Why |
-|---|---|
-| Microphone | record your voice |
-| Input Monitoring | notice when you hold the hotkey |
-| Accessibility | press ⌘V / ⌘C to insert text and read your selection |
-
-Quit and restart Quill after granting them.
-
-To start Quill at login: `./login-item.sh` (undo with `./login-item.sh --remove`).
+macOS asks the first time. In System Settings → Privacy & Security, allow **Quill** under
+**Microphone**, **Input Monitoring** and **Accessibility** (the Settings window has buttons that
+open each one), then click **Restart Quill** in the Settings window.
 
 ## Using it
 
@@ -52,32 +42,21 @@ Spoken formatting works: "new line", "new paragraph", "bullet point", "numbered 
 
 ## Settings
 
-Menu → **Edit settings…** opens `~/Library/Application Support/Quill/config.json`. Save, then
-menu → **Reload settings**.
+Open the Quill app (or 🎙 → Settings…). Everything is stored in
+`~/Library/Application Support/Quill/config.json` if you prefer editing the file.
 
-- **dictionary.words**: terms to always spell right (SAIF, subluxation, patient-facing names…).
-  These also steer Whisper, so accuracy goes up, not just spelling.
-- **dictionary.replacements**: hard fixes applied every time, e.g. `"safe corporation": "SAIF Corporation"`.
-- **snippets**: `"trigger phrase": "text to insert"`. Snippet text is expanded on your Mac and never sent to Claude.
-- **styles.apps**: per-app tone, keyed by bundle id or app name. Presets: `clean`, `formal`,
-  `casual`, `very_casual`, `clinical`, or write your own instruction as the value.
-  Add `"cleanup": false` to keep an app **100% local**: nothing leaves your Mac for that app.
-- **hotkeys.dictate**: `alt_r` (Right Option) by default. Others: `cmd_r`, `ctrl_r`, `f13`…
-- **whisper.model**: `auto` (large-v3-turbo on Apple Silicon, small.en on Intel), or `small.en` for speed.
-- **cleanup.model**: `claude-haiku-5-5` (fast, cheap) by default; `claude-sonnet-5-5` for heavier rewriting.
-
-Finding a bundle id: `osascript -e 'id of app "Mail"'`
+- **Dictionary**: terms to always spell right; also steers Whisper so it hears them better.
+  **Always replace** fixes, e.g. "safe corporation" → "SAIF Corporation".
+- **Snippets**: say the trigger, get the text. Snippet text never leaves your Mac.
+- **App styles**: tone per app (Formal, Casual, Clinical, or your own description).
+  **Local only** keeps that app 100% on your Mac: no Claude cleanup.
+- **General**: dictation key, sounds, Claude model, Whisper model, API key.
 
 ### Patient information
 
 Audio and transcription always stay on your Mac. When AI cleanup is on, the transcribed
-**text** is sent to Anthropic's API. For your charting software, add it with
-`"cleanup": false` (fully local), or confirm you have a BAA with Anthropic before sending PHI.
-Example:
-
-```json
-"Your EHR App Name": { "style": "clinical", "cleanup": false }
-```
+**text** is sent to Anthropic's API. For your charting software, turn on **Local only**, or confirm you have a BAA with Anthropic before sending PHI.
+In Settings → App styles, add it and turn on **Local only**.
 
 The log (`~/Library/Logs/Quill.log`) records timings and character counts only, never what you said.
 

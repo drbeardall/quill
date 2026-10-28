@@ -6,3 +6,4 @@ anthropic>=0.40
 keyring>=24
 pyobjc-framework-Cocoa>=10
 pyobjc-framework-Quartz>=10
+pywebview>=5.0
