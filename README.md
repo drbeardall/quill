@@ -6,7 +6,7 @@ it wherever your cursor is: Mail, Messages, Chrome, Notes, your EHR, anything.
 
 ## Install (about 5 minutes)
 
-Needs macOS 13+ and Python 3.10+ (`brew install python@3.12` if you don't have it).
+Needs macOS 13+ and Python 3.9+ (the one built into macOS works).
 
 ```bash
 cd ~/Downloads/quill        # wherever you unzipped it

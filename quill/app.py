@@ -8,6 +8,7 @@ import time
 import traceback
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 import rumps
 from pynput import keyboard
@@ -54,8 +55,8 @@ class QuillApp(rumps.App):
         self.status_text = "Loading speech model… (first run downloads it)"
         self.last_text = ""
         self.recorder = Recorder()
-        self.transcriber: Transcriber | None = None
-        self.engine: core.Engine | None = None
+        self.transcriber: Optional[Transcriber] = None
+        self.engine: Optional[core.Engine] = None
         self.busy = False
         self.recording = False
         self.locked = False
