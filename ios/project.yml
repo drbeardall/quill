@@ -1,0 +1,83 @@
+# Generate the Xcode project with:  xcodegen   (brew install xcodegen)
+name: Quill
+options:
+  bundleIdPrefix: com.drbeardall
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""          # set by setup.sh, or pick your team in Xcode › Signing
+    TARGETED_DEVICE_FAMILY: "1"
+
+packages:
+  ArgmaxOSS:
+    url: https://github.com/argmaxinc/argmax-oss-swift.git
+    from: "0.9.0"
+
+targets:
+  Quill:
+    type: application
+    platform: iOS
+    sources:
+      - App
+      - Shared
+    resources:
+      - App/Assets.xcassets
+    dependencies:
+      - package: ArgmaxOSS
+        product: WhisperKit
+      - target: QuillKeyboard
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.drbeardall.quill
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    entitlements:
+      path: App/Quill.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.drbeardall.quill]
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Quill
+        UILaunchScreen: {}
+        UIApplicationSupportsIndirectInputEvents: true
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSMicrophoneUsageDescription: Quill listens while you dictate so it can turn your speech into text. Speech recognition runs on your iPhone.
+        UIBackgroundModes: [audio]
+        CFBundleURLTypes:
+          - CFBundleURLName: com.drbeardall.quill
+            CFBundleURLSchemes: [quill]
+
+  QuillKeyboard:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Keyboard
+      - Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.drbeardall.quill.keyboard
+        APPLICATION_EXTENSION_API_ONLY: YES
+    entitlements:
+      path: Keyboard/QuillKeyboard.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.drbeardall.quill]
+    info:
+      path: Keyboard/Info.plist
+      properties:
+        CFBundleDisplayName: Quill
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.keyboard-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).KeyboardViewController
+          NSExtensionAttributes:
+            RequestsOpenAccess: true
+            PrimaryLanguage: en-US
+            IsASCIICapable: false
+            PrefersRightToLeft: false

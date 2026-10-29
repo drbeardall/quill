@@ -3,3 +3,9 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .DS_Store
+ios/Quill.xcodeproj/
+ios/App/Info.plist
+ios/Keyboard/Info.plist
+ios/App/Quill.entitlements
+ios/Keyboard/QuillKeyboard.entitlements
+quill/Quill.icns
